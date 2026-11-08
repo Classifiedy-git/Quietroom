@@ -1,0 +1,32 @@
+# Secrets and machine-specific settings.
+# app/config.local.php is written by the installer and contains the database
+# password and the Gemini API key. Never commit it.
+app/config.local.php
+
+# Local environment files
+.env
+.env.local
+
+# Logs and caches
+*.log
+logs/
+tmp/
+.cache/
+app/runtime/
+
+# Editor / OS noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# User-uploaded avatar images. Personal data — never commit these.
+assets/uploads/avatars/**
+
+# But keep the directory and its .htaccess tracked.
+!assets/uploads/avatars/.htaccess
+
+# Local release zips and per-host deploy notes — not source.
+Archive.zip
+DEPLOY-BYETHOST.md

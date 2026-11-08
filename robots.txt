@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /settings
+Disallow: /dashboard
+Disallow: /journal
+Disallow: /checkin
+Disallow: /companion
+Disallow: /crisis
+Disallow: /admin
+
+Sitemap: https://quietroom.byethost7.com/sitemap.xml
+EOF

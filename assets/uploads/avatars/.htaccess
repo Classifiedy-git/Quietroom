@@ -1,0 +1,32 @@
+# Quietroom: uploaded avatar images.
+#
+# Images are served directly; scripts are never executed.
+# Directory listings are disabled.
+
+Options -Indexes -ExecCGI
+
+<IfModule mod_authz_core.c>
+  Require all granted
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Order allow,deny
+  Allow from all
+</IfModule>
+
+<IfModule mod_mime.c>
+  RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .phps .pl .py .cgi .sh
+  AddType text/plain .php .phtml .php3 .php4 .php5 .php7 .phps .pl .py .cgi .sh
+</IfModule>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule \.(php|phtml|php3|php4|php5|php7|phps|pl|py|cgi|sh|htaccess)$ - [F,L,NC]
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/jpeg "access plus 7 days"
+  ExpiresByType image/png "access plus 7 days"
+  ExpiresByType image/gif "access plus 7 days"
+  ExpiresByType image/webp "access plus 7 days"
+</IfModule>

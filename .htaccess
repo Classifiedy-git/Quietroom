@@ -1,0 +1,84 @@
+# Classifiedy: Apache configuration
+#
+# Works on InfinityFree, Hostinger, OVH and most shared hosts.
+# If your host does not support .htaccess, the app still works. Every link
+# falls back to index.php?r=page automatically.
+#
+# Every directive below sits inside an <IfModule> guard, so a host that is
+# missing an optional Apache module still serves the site instead of
+# answering with "500 Internal Server Error".
+
+Options -Indexes
+<IfModule mod_dir.c>
+  DirectoryIndex index.php
+</IfModule>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Never rewrite real files or directories (assets, images, css, js).
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+
+  # Route everything else through the front controller.
+  RewriteRule ^(.*)$ index.php?r=$1 [L,QSA]
+</IfModule>
+
+# Block direct access to sensitive files.
+<FilesMatch "^(config\.php|config\.local\.php|composer\.(json|lock)|\.env|.*\.sql|.*\.log|.*\.md)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order deny,allow
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+# Security headers
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+  Header unset X-Powered-By
+  Header always unset X-Powered-By
+</IfModule>
+
+# Long cache for static assets.
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 7 days"
+  ExpiresByType application/javascript "access plus 7 days"
+  ExpiresByType image/svg+xml "access plus 30 days"
+  ExpiresByType image/png "access plus 30 days"
+  ExpiresByType application/manifest+json "access plus 7 days"
+</IfModule>
+
+# Compress text responses. AddOutputFilterByType comes from mod_filter, not
+# from mod_deflate, so both modules are checked before the rule is added.
+<IfModule mod_filter.c>
+  <IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml application/javascript application/json application/manifest+json image/svg+xml
+  </IfModule>
+</IfModule>
+
+# Uploaded and generated files should never be executed.
+<IfModule mod_rewrite.c>
+  RewriteRule ^(app|assets|tests)/.*\.(php|phtml|php3|php4|php5|php7|phps|pl|py|cgi|sh|htaccess)$ - [F,L,NC]
+</IfModule>
+
+# Never list directory contents.
+Options -Indexes -MultiViews
+
+# The test suite is for local use only. These scripts create accounts and
+# must never run against the live site.
+<IfModule mod_rewrite.c>
+  RewriteRule ^tests/ - [F,L,NC]
+</IfModule>
+
+# Do not advertise the PHP version.
+<IfModule mod_php.c>
+  php_flag expose_php off
+</IfModule>

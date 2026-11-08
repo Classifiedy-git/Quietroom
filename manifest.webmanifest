@@ -1,0 +1,19 @@
+{
+  "name": "Quietroom: private mental wellness support",
+  "short_name": "Quietroom",
+  "description": "A private space for tracking how you feel, with evidence-based tools and an optional AI companion.",
+  "start_url": "./dashboard",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f5f1",
+  "theme_color": "#123b3f",
+  "icons": [
+    {
+      "src": "./assets/img/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

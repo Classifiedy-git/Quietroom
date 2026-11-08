@@ -1,0 +1,14 @@
+# Everything in /app is server-side only. Nothing here may be requested directly.
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Order deny,allow
+  Deny from all
+</IfModule>
+
+# Belt and braces: no directory listings, no script execution from odd places.
+Options -Indexes -ExecCGI
+<IfModule mod_mime.c>
+  AddType text/plain .php .phtml .php3 .php4 .php5 .php7 .phps .pl .py .cgi .sh
+</IfModule>

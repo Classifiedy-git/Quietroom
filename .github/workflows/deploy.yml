@@ -1,0 +1,53 @@
+# Quietroom — CI/CD
+#
+# Pushes `main` to the production FTP server. Never pushes directly to the
+# FTP account — this runner does the upload so the repo stays the single
+# source of truth.
+#
+# Required GitHub secrets (Settings → Secrets and variables → Actions):
+#   FTP_HOST      e.g. ftpupload.net
+#   FTP_USER      e.g. b7_43241403
+#   FTP_PASS      FTP password
+#   FTP_PATH      document root, e.g. /htdocs
+#
+# What it uploads:
+#   Everything in the repo EXCEPT app/config.local.php (secrets) and
+#   assets/uploads/avatars/** (user-uploaded images). Those are preserved
+#   untouched on the server.
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Lint PHP
+        run: |
+          find . -name "*.php" -not -path "./vendor/*" | while read f; do
+            php -l "$f"
+          done
+
+      - name: Upload to FTP
+        uses: SamirAboAuda/ftp-deploy-action@v1.0.3
+        with:
+          ftp-server: ${{ secrets.FTP_HOST }}
+          ftp-username: ${{ secrets.FTP_USER }}
+          ftp-password: ${{ secrets.FTP_PASS }}
+          ftp-path: ${{ secrets.FTP_PATH }}
+          # Exclude secrets and user-uploaded images from the upload.
+          # The action uploads everything tracked in the repo; the .gitignore
+          # already keeps config.local.php and avatars out of the repo, so
+          # they are preserved on the server untouched.
+          git-branch: main

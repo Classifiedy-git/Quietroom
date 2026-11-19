@@ -195,7 +195,15 @@ require APP_ROOT . '/app/views/header.php';
       <h3><span class="head-icon"><?= icon('sparkle') ?></span>AI weekly summary</h3>
       <p class="small muted">An honest read of the data above, written in plain language, ready to share with your therapist if you want.</p>
       <button class="btn btn-soft btn-block" id="summary-btn" data-days="<?= $range ?>"><?= icon('sparkle') ?><span>Write my summary</span></button>
+      <button class="btn btn-soft btn-block mt-2" id="pdf-btn" disabled data-since="<?= e($since) ?>" data-until="<?= e(date('Y-m-d')) ?>"><?= icon('download') ?><span>Save as PDF</span></button>
       <div id="summary-out" class="hidden mt-4"></div>
+    </section>
+
+    <section class="card">
+      <h3><span class="head-icon"><?= icon('sparkle') ?></span>AI mood insights</h3>
+      <p class="small muted">A plain-language read of your patterns above.</p>
+      <button class="btn btn-soft btn-block" id="insights-btn" data-days="<?= $range ?>"><?= icon('sparkle') ?><span>Get insights</span></button>
+      <div id="insights-out" class="hidden mt-4"></div>
     </section>
 
     <section class="card card-soft">
@@ -209,7 +217,9 @@ require APP_ROOT . '/app/views/header.php';
 <?php endif; ?>
 
 <?php
-$pageScripts = '<script src="' . e(script_url('assets/js/charts.js')) . '" defer></script>'
+$pageScripts = '<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>'
+    . '<script>window.CLASSY_USER_NAME=' . json_encode($user['display_name'] ?? 'You', JSON_UNESCAPED_UNICODE) . ';</script>'
+    . '<script src="' . e(script_url('assets/js/charts.js')) . '" defer></script>'
     . '<script>window.CLASSY_INSIGHTS=' . json_encode([
         'labels'   => $labels,
         'mood'     => $mood,

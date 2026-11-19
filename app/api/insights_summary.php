@@ -1,9 +1,8 @@
 <?php
 /**
  * API: AI weekly summary built from the user's own data
+ * Caches by data hash to avoid regenerating identical summaries.
  */
-api_guard('summary', 6, 86400);
-
 $uid = (int) Auth::id();
 $user = Auth::user();
 
@@ -13,9 +12,9 @@ if ((int) $user['ai_enabled'] !== 1) {
 if (!AI::isConfigured()) {
     json_error('The AI companion is not configured on this server yet.', 503);
 }
-ai_quota_check($uid, 60);
 
 $days = clamp_int(post('days', 7), 3, 30, 7);
+$force = (bool) post('force', 0);
 $since = date('Y-m-d', strtotime('-' . ($days - 1) . ' day'));
 
 $rows = DB::all(
@@ -25,8 +24,8 @@ $rows = DB::all(
 );
 
 $journal = DB::all(
-    'SELECT title, body, entry_type, created_at FROM journal_entries
-     WHERE user_id = ? AND created_at >= ? ORDER BY created_at ASC LIMIT 40',
+    "SELECT title, body, entry_type, created_at FROM journal_entries
+     WHERE user_id = ? AND created_at >= ? AND (prompt IS NULL OR prompt != 'AI weekly summary') ORDER BY created_at ASC LIMIT 40",
     [$uid, $since . ' 00:00:00']
 );
 
@@ -52,23 +51,72 @@ foreach ($exercises as $x) {
     $block .= '- ' . $x['exercise_key'] . ' for ' . (int) $x['duration_seconds'] . "s\n";
 }
 
+$dataHash = md5($block);
+
+// Ensure table exists (lazy creation)
+try {
+    DB::exec('CREATE TABLE IF NOT EXISTS ai_summaries (
+        id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        user_id INT UNSIGNED NOT NULL,
+        range_days INT NOT NULL,
+        data_hash VARCHAR(64) NOT NULL,
+        summary MEDIUMTEXT NOT NULL,
+        created_at DATETIME NOT NULL,
+        PRIMARY KEY (id),
+        KEY idx_summary_user (user_id, range_days, data_hash)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
+} catch (Throwable $e) {
+    error_log('[Quietroom] ai_summaries create failed: ' . $e->getMessage());
+}
+
+// Check cache (before rate limit, so cached responses are free)
+if (!$force) {
+    $cached = DB::one(
+        'SELECT summary, created_at FROM ai_summaries WHERE user_id = ? AND range_days = ? AND data_hash = ? ORDER BY created_at DESC LIMIT 1',
+        [$uid, $days, $dataHash]
+    );
+    if ($cached) {
+        json_out(['ok' => true, 'text' => $cached['summary'], 'cached' => true, 'cached_at' => $cached['created_at']]);
+    }
+}
+
+// Rate limit only for new generation
+api_guard('summary', 30, 86400);
+ai_quota_check($uid, 60);
+
 $res = AI::weeklySummary($block);
 if (!$res['ok']) {
     json_error($res['error'] ?? 'The summary could not be generated right now.', 503);
 }
 
 $summary = trim((string) $res['text']);
-DB::exec(
-    'INSERT INTO journal_entries (user_id, title, body, entry_type, prompt, created_at, updated_at) VALUES (?,?,?,?,?,?,?)',
-    [
-        $uid,
-        'Weekly summary: ' . date('j M', strtotime($since)) . ' to ' . date('j M'),
-        $summary,
-        'cbt',
-        'AI weekly summary',
-        now(),
-        now(),
-    ]
-);
 
-json_out(['ok' => true, 'text' => $summary]);
+// Store in cache (non-fatal)
+try {
+    DB::exec(
+        'INSERT INTO ai_summaries (user_id, range_days, data_hash, summary, created_at) VALUES (?,?,?,?,?)',
+        [$uid, $days, $dataHash, $summary, now()]
+    );
+} catch (Throwable $e) {
+    error_log('[Quietroom] ai_summaries insert failed: ' . $e->getMessage());
+}
+
+// Also save to journal (non-fatal)
+try {
+    DB::exec(
+        'INSERT INTO journal_entries (user_id, title, body, entry_type, prompt, created_at, updated_at) VALUES (?,?,?,?,?,?,?)',
+        [
+            $uid,
+            'Weekly summary: ' . date('j M', strtotime($since)) . ' to ' . date('j M'),
+            $summary,
+            'cbt',
+            'AI weekly summary',
+            now(),
+            now(),
+        ]
+    );
+} catch (Throwable $e) {
+    error_log('[Quietroom] journal insert failed: ' . $e->getMessage());
+}
+
+json_out(['ok' => true, 'text' => $summary, 'cached' => false]);

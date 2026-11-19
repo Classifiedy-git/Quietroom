@@ -155,7 +155,16 @@ CREATE TABLE IF NOT EXISTS settings (
   PRIMARY KEY (k)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS ai_usage (
+CREATE TABLE IF NOT EXISTS ai_summaries (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id INT UNSIGNED NOT NULL,
+  range_days INT NOT NULL,
+  data_hash VARCHAR(64) NOT NULL,
+  summary MEDIUMTEXT NOT NULL,
+  created_at DATETIME NOT NULL,
+  PRIMARY KEY (id),
+  KEY idx_summary_user (user_id, range_days, data_hash)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   user_id INT UNSIGNED NULL,
   model VARCHAR(60) NULL,

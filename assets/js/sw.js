@@ -1,5 +1,5 @@
 /* Quietroom service worker — cache static assets for instant repeat loads. */
-const CACHE = 'quietroom-static-v2';
+const CACHE = 'quietroom-static-v3';
 const PRECACHE = [
   '/assets/css/app.css',
   '/assets/js/app.js',

@@ -102,6 +102,18 @@ The person in Quietroom wants a short weekly summary of their mood check-ins, en
 Write plain prose, no markdown, no headings, no bullets, 150-250 words. Cover: overall mood trend, the strongest pattern you can see, any days that stood out, what they did that seemed to help, and one gentle suggestion for the coming week. Be factual and kind. Do not diagnose or name conditions. If the data suggests possible self-harm or suicidal thinking, add one clear line urging them to contact a crisis line or their doctor right now.
 PROMPT;
 
+    private const MOOD_INSIGHTS_PROMPT = <<<'PROMPT'
+You are a pattern reader inside Quietroom, a private mental-wellbeing app. The person has shared their mood, anxiety, energy and sleep data over several days.
+
+Write 3-5 short sentences in plain language. Name the strongest pattern you can see (for example a link between sleep and mood, a day-of-week dip, or a recurring trigger). Then offer one small, kind, practical suggestion for the coming week. Never diagnose, never name conditions, never use lists, never use markdown, never use emoji, never use em dashes. If the data suggests possible self-harm or suicidal thinking, add one clear line urging them to contact a crisis line or their doctor right now.
+PROMPT;
+
+    private const JOURNAL_PROMPT_AI = <<<'PROMPT'
+You are a journaling companion inside Quietroom. Given the person's recent journal entries and current mood, suggest ONE specific, warm journaling prompt they could write about right now.
+
+Return only the prompt itself, under 25 words, no quotation marks, no markdown, no emoji, no em dashes. Make it feel personal and inviting, not generic. Never clinical. Never ask about self-harm.
+PROMPT;
+
     /** @var array<string,mixed> */
     private static array $settings = [];
 
@@ -755,6 +767,33 @@ PROMPT;
         return self::chat([], $context . ' Suggest one small thing I can do in the next ten minutes, and one thing for later today. Keep it warm, practical and under 80 words.', [
             'system' => self::SYSTEM_PROMPT,
             'generation' => ['maxOutputTokens' => 300, 'temperature' => 0.8],
+        ]);
+    }
+
+    /** Mood insights from check-in data. */
+    public static function moodInsights(string $dataBlock): array
+    {
+        return self::chat([], "Here is my mood data:\n\n" . $dataBlock, [
+            'system' => self::MOOD_INSIGHTS_PROMPT,
+            'generation' => ['maxOutputTokens' => 400, 'temperature' => 0.7],
+        ]);
+    }
+
+    /** AI-generated journaling prompt. */
+    public static function journalPrompt(array $recentEntries, int $mood = 0): array
+    {
+        $block = '';
+        foreach (array_slice($recentEntries, 0, 5) as $e) {
+            $block .= '- ' . str_excerpt((string) ($e['body'] ?? ''), 60) . "\n";
+        }
+        $msg = "My recent journal entries:\n" . $block;
+        if ($mood > 0) {
+            $msg .= "\nMy mood right now: $mood/10.";
+        }
+        $msg .= "\n\nSuggest one journaling prompt for me right now.";
+        return self::chat([], $msg, [
+            'system' => self::JOURNAL_PROMPT_AI,
+            'generation' => ['maxOutputTokens' => 60, 'temperature' => 0.9],
         ]);
     }
 

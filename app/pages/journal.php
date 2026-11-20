@@ -89,10 +89,13 @@ require APP_ROOT . '/app/views/header.php';
             <span class="head-icon is-quiet"><?= icon('quote') ?></span>
             <p class="prompt-q m-0 grow" id="prompt-text"><?= e($todayPrompt) ?></p>
           </div>
-          <div class="row-between mt-3">
-            <button class="btn btn-ghost btn-sm" type="button" id="new-prompt"><?= icon('refresh') ?><span>Another prompt</span></button>
-            <span class="tiny faint">Or ignore it and write whatever you want</span>
-          </div>
+           <div class="row-between mt-3">
+             <div class="row gap-2">
+               <button class="btn btn-ghost btn-sm" type="button" id="new-prompt"><?= icon('refresh') ?><span>Another prompt</span></button>
+               <button class="btn btn-ghost btn-sm" type="button" id="ai-prompt-btn"><?= icon('sparkle') ?><span>AI prompt</span></button>
+             </div>
+             <span class="tiny faint">Or ignore it and write whatever you want</span>
+           </div>
           <input type="hidden" name="prompt" id="prompt-input" value="<?= e($todayPrompt) ?>">
         </div>
 

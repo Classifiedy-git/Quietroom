@@ -49,7 +49,7 @@ return [
     // ------------------------------------------------------------------
     'APP_NAME'      => 'Quietroom',
     'APP_TAGLINE'   => 'A quiet, private space for mental wellness support',
-    'APP_VERSION'   => '1.1.8',
+    'APP_VERSION'   => '1.2.0',
 
     // ------------------------------------------------------------------
     // Database (InfinityFree example):
